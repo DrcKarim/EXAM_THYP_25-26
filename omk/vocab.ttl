@@ -1,0 +1,130 @@
+@prefix : <http://example.org/master-eval#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+# CLASSES
+#################################################################
+
+:Master a rdfs:Class ;
+    rdfs:label "Master"@fr ;
+    rdfs:comment "Programme de Master dans lequel les étudiants sont inscrits."@fr .
+
+:Course a rdfs:Class ;
+    rdfs:label "Cours"@fr ;
+    rdfs:comment "Un cours enseigné dans le cadre d'un Master."@fr .
+
+:Student a rdfs:Class ;
+    rdfs:label "Étudiant"@fr ;
+    rdfs:comment "Étudiant inscrit dans un Master."@fr .
+
+:Teacher a rdfs:Class ;
+    rdfs:label "Enseignant"@fr ;
+    rdfs:comment "Enseignant responsable d'un cours."@fr .
+
+:Evaluation a rdfs:Class ;
+    rdfs:label "Évaluation"@fr ;
+    rdfs:comment "Une évaluation d'un étudiant dans un cours (examen, projet, contrôle continu, etc.)."@fr .
+
+:Grade a rdfs:Class ;
+    rdfs:label "Note"@fr ;
+    rdfs:comment "La note ou le résultat d'une évaluation."@fr .
+
+#################################################################
+# PROPRIÉTÉS RELATIONNELLES (objet)
+#################################################################
+
+:hasCourse a rdf:Property ;
+    rdfs:label "a pour cours"@fr ;
+    rdfs:domain :Evaluation ;
+    rdfs:range :Course ;
+    rdfs:comment "Relie une évaluation au cours concerné."@fr .
+
+:hasStudent a rdf:Property ;
+    rdfs:label "a pour étudiant"@fr ;
+    rdfs:domain :Evaluation ;
+    rdfs:range :Student ;
+    rdfs:comment "Relie une évaluation à l'étudiant évalué."@fr .
+
+:hasTeacher a rdf:Property ;
+    rdfs:label "a pour enseignant"@fr ;
+    rdfs:domain :Course ;
+    rdfs:range :Teacher ;
+    rdfs:comment "Relie un cours à l'enseignant responsable."@fr .
+
+:hasMaster a rdf:Property ;
+    rdfs:label "fait partie du Master"@fr ;
+    rdfs:domain :Course ;
+    rdfs:range :Master ;
+    rdfs:comment "Indique à quel Master appartient un cours."@fr .
+
+:hasGrade a rdf:Property ;
+    rdfs:label "a pour note"@fr ;
+    rdfs:domain :Evaluation ;
+    rdfs:range :Grade ;
+    rdfs:comment "Relie une évaluation à la note obtenue."@fr .
+
+#################################################################
+# PROPRIÉTÉS DE DONNÉES (littérales)
+#################################################################
+
+:studentId a rdf:Property ;
+    rdfs:label "identifiant étudiant"@fr ;
+    rdfs:domain :Student ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Identifiant unique de l'étudiant (numéro étudiant)."@fr .
+
+:studentName a rdf:Property ;
+    rdfs:label "nom complet de l'étudiant"@fr ;
+    rdfs:domain :Student ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Nom et prénom de l'étudiant."@fr .
+
+:courseCode a rdf:Property ;
+    rdfs:label "code du cours"@fr ;
+    rdfs:domain :Course ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Code unique du cours (par exemple THYP01)."@fr .
+
+:courseTitle a rdf:Property ;
+    rdfs:label "titre du cours"@fr ;
+    rdfs:domain :Course ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Titre ou nom du cours."@fr .
+
+:masterName a rdf:Property ;
+    rdfs:label "nom du Master"@fr ;
+    rdfs:domain :Master ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Intitulé du Master (ex: Technologies de l’Hypermédia)."@fr .
+
+:evaluationType a rdf:Property ;
+    rdfs:label "type d'évaluation"@fr ;
+    rdfs:domain :Evaluation ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Type d'évaluation (examen, projet, TD, contrôle continu...)."@fr .
+
+:evaluationDate a rdf:Property ;
+    rdfs:label "date de l'évaluation"@fr ;
+    rdfs:domain :Evaluation ;
+    rdfs:range xsd:date ;
+    rdfs:comment "Date à laquelle a lieu l'évaluation."@fr .
+
+:scoreValue a rdf:Property ;
+    rdfs:label "valeur de la note"@fr ;
+    rdfs:domain :Grade ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Valeur numérique de la note (par exemple sur 20)."@fr .
+
+:scoreScale a rdf:Property ;
+    rdfs:label "barème de la note"@fr ;
+    rdfs:domain :Grade ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Barème de la note (ex: /20, /100)."@fr .
+
+:comment a rdf:Property ;
+    rdfs:label "commentaire"@fr ;
+    rdfs:domain :Evaluation ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Commentaire éventuel sur l'évaluation (remarques de l'enseignant)."@fr .
