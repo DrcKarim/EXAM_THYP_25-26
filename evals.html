@@ -147,13 +147,19 @@ function apiUrl(path = "") {
 // Fonction pour enregistrer une évaluation
 async function setEval() {
     const messageDiv = document.getElementById("message");
-    let etu = document.getElementById("etuId").value;
-    let cours = document.getElementById("coursId").value;
-    let note = document.getElementById("noteId").value;
+    let etu = document.getElementById("etuId").value.trim();
+    let cours = document.getElementById("coursId").value.trim();
+    let note = document.getElementById("noteId").value.trim();
 
     // Validation
     if (!etu || !cours || !note) {
         messageDiv.innerHTML = '<div class="error">Veuillez remplir tous les champs</div>';
+        return;
+    }
+
+    // Vérifier que ce sont des nombres
+    if (isNaN(etu) || isNaN(cours) || isNaN(note)) {
+        messageDiv.innerHTML = '<div class="error">Les IDs doivent être des nombres (ex: Étudiant=123, Cours=112, Note=17)</div>';
         return;
     }
 
@@ -231,24 +237,14 @@ async function showEval() {
             const resourceClass = item["o:resource_class"];
             if (!resourceClass) return false;
             
-            // Vérifier si c'est une Evaluation
+            // Vérifier si c'est une Evaluation (ID = 113)
             const classId = resourceClass["o:id"];
-            const classLabel = resourceClass["o:label"];
             const classUri = resourceClass["@id"];
             
-            console.log("Item:", item["dcterms:title"]?.[0]?.["@value"], 
-                       "| Class ID:", classId, 
-                       "| Label:", classLabel,
-                       "| URI:", classUri);
-            
-            return (typeof classId === 'string' && classId.includes("Evaluation")) ||
-                   (typeof classId === 'number' && classUri && classUri.includes("Evaluation")) ||
-                   classLabel === "Évaluation" ||
-                   (item["@type"] && Array.isArray(item["@type"]) && 
-                    item["@type"].some(t => t.includes("evalMasterTHYP:Evaluation")));
+            return classId === 113 || 
+                   (classUri && classUri.includes("/113")) ||
+                   (classUri && classUri.includes("Evaluation"));
         });
-
-        console.log("Évaluations filtrées:", evaluations);
 
         let html = "";
         
