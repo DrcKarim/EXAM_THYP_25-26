@@ -1,7 +1,7 @@
 # Examen THYP du 9 décembre 2025
 Karim BOUCHAANE
 
-## 🚀 LANCEMENT RAPIDE
+##  LANCEMENT RAPIDE
 
 ### 1. Démarrer le serveur
 ```bash
@@ -15,7 +15,7 @@ python3 -m http.server 8000
 
 ---
 
-## ✅ Exercice 1 - Liste des cours (`cours.html`)
+## Exercice 1 - Liste des cours (`cours.html`)
 
 **Fonctions:**
 - `getCours()` - Récupère la liste des cours
@@ -23,7 +23,7 @@ python3 -m http.server 8000
 
 ---
 
-## ✅ Exercice 2 - Évaluations (`evals.html`)
+## Exercice 2 - Évaluations (`evals.html`)
 
 **Fonctions:**
 - `setEval()` - Enregistre une évaluation
@@ -37,7 +37,7 @@ python3 -m http.server 8000
 
 ---
 
-## ⚠️ IMPORTANT
+## IMPORTANT
 - **Toujours lancer le serveur** (sinon erreur CORS)
 - IDs: Cours=110, Étudiant=111, Évaluation=113
 
