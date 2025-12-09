@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Évaluations</title>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f7f7f7;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 900px;
+        margin: 30px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h1, h2 {
+        color: #222;
+        text-align: left;
+    }
+
+    label {
+        font-weight: bold;
+        margin-top: 15px;
+        display: block;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+        transition: 0.2s;
+    }
+
+    input:focus {
+        border-color: black;
+        box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+
+    button {
+        margin-top: 20px;
+        width: 100%;
+        background: black;
+        color: white;
+        padding: 14px;
+        border: none;
+        font-size: 17px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #333;
+    }
+
+    hr {
+        margin: 30px 0;
+        border: none;
+        height: 1px;
+        background: #ddd;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 12px;
+        border-left: 5px solid black;
+        box-shadow: 0px 1px 5px rgba(0,0,0,0.1);
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .card b {
+        color: #444;
+    }
+
+    @keyframes fadeIn {
+        from {opacity: 0; transform: translateY(5px);}
+        to   {opacity: 1; transform: translateY(0);}
+    }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+    <h1>Ajouter une évaluation</h1>
+
+    <label>Étudiant (ID Omeka)</label>
+    <input id="etuId" placeholder="ex: 32">
+
+    <label>Cours (ID Omeka)</label>
+    <input id="coursId" placeholder="ex: 14">
+
+    <label>Note</label>
+    <input id="noteId" placeholder="ex: 18">
+
+    <button onclick="setEval()">Enregistrer l’évaluation</button>
+
+    <hr>
+
+    <h2>Liste des évaluations</h2>
+    <div id="evalList"></div>
+</div>
+
+
+<script>
+const API = "http://localhost/omk_thyp_25-26_clone/api/items?key=TA_CLE_API";
+
+// ID de la classe "Évaluation"
+const CLASS_EVAL = 123; // Remplacer par ton ID Omeka
+
+// Fonction pour enregistrer une évaluation
+async function setEval() {
+    let etu = document.getElementById("etuId").value;
+    let cours = document.getElementById("coursId").value;
+    let note = document.getElementById("noteId").value;
+
+    let data = {
+        "o:resource_class": { "o:id": CLASS_EVAL },
+        "o:resource_template": { "o:id": 8 }, // ID du template "Evaluation Template"
+        "o:properties": {
+            "title": [{ "@value": "Évaluation étudiant", "type": "literal" }],
+            "scoreValue": [{ "@value": note, "type": "literal" }],
+            "hasStudent": [{ "value_resource_id": etu }],
+            "hasCourse": [{ "value_resource_id": cours }]
+        }
+    };
+
+    await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    showEval();
+}
+
+// Fonction pour afficher les évaluations
+async function showEval() {
+    let resp = await fetch(API);
+    let list = await resp.json();
+
+    let html = "";
+    list.forEach(e => {
+        html += `
+        <div class="card">
+            <b>ID :</b> ${e["o:id"]}<br>
+            <b>Note :</b> ${e["scoreValue"] ? e["scoreValue"][0]["@value"] : "?"}<br>
+            <b>Étudiant :</b> ${e["hasStudent"] ? e["hasStudent"][0]["value_resource_id"] : "?"}<br>
+            <b>Cours :</b> ${e["hasCourse"] ? e["hasCourse"][0]["value_resource_id"] : "?"}
+        </div>
+        `;
+    });
+
+    document.getElementById("evalList").innerHTML = html;
+}
+
+showEval();
+</script>
+
+</body>
+</html>

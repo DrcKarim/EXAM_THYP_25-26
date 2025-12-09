@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Évaluations</title>
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f7f7f7;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 900px;
+        margin: 30px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h1, h2 {
+        color: #222;
+        text-align: left;
+    }
+
+    label {
+        font-weight: bold;
+        margin-top: 15px;
+        display: block;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+        transition: 0.2s;
+        box-sizing: border-box;
+    }
+
+    input:focus {
+        border-color: black;
+        box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        outline: none;
+    }
+
+    button {
+        margin-top: 20px;
+        width: 100%;
+        background: black;
+        color: white;
+        padding: 14px;
+        border: none;
+        font-size: 17px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #333;
+    }
+
+    hr {
+        margin: 30px 0;
+        border: none;
+        height: 1px;
+        background: #ddd;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 12px;
+        border-left: 5px solid black;
+        box-shadow: 0px 1px 5px rgba(0,0,0,0.1);
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .card b {
+        color: #444;
+    }
+
+    @keyframes fadeIn {
+        from {opacity: 0; transform: translateY(5px);}
+        to   {opacity: 1; transform: translateY(0);}
+    }
+
+    .error {
+        color: red;
+        padding: 10px;
+        background: #fee;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+
+    .success {
+        color: green;
+        padding: 10px;
+        background: #efe;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+    <h1>Ajouter une évaluation</h1>
+
+    <label>Étudiant (ID Omeka)</label>
+    <input id="etuId" type="number" placeholder="ex: 32">
+
+    <label>Cours (ID Omeka)</label>
+    <input id="coursId" type="number" placeholder="ex: 14">
+
+    <label>Note</label>
+    <input id="noteId" type="number" min="0" max="20" step="0.5" placeholder="ex: 18">
+
+    <button onclick="setEval()">Enregistrer l'évaluation</button>
+
+    <div id="message"></div>
+
+    <hr>
+
+    <h2>Liste des évaluations</h2>
+    <div id="evalList">Chargement...</div>
+</div>
+
+
+<script type="module">
+import { pa } from './authParams.js';
+
+// Fonction utilitaire pour construire l'URL de l'API
+function apiUrl(path = "") {
+    return `${pa.apiOmk}${path}?key_identity=${pa.ident}&key_credential=${pa.key}`;
+}
+
+// Fonction pour enregistrer une évaluation
+async function setEval() {
+    const messageDiv = document.getElementById("message");
+    let etu = document.getElementById("etuId").value;
+    let cours = document.getElementById("coursId").value;
+    let note = document.getElementById("noteId").value;
+
+    // Validation
+    if (!etu || !cours || !note) {
+        messageDiv.innerHTML = '<div class="error">Veuillez remplir tous les champs</div>';
+        return;
+    }
+
+    messageDiv.innerHTML = '<div>Enregistrement en cours...</div>';
+
+    // Construction de la ressource selon le format Omeka S
+    let data = {
+        "o:resource_class": { 
+            "o:id": "evalMasterTHYP:Evaluation"
+        },
+        "dcterms:title": [
+            { 
+                "@value": `Évaluation - Étudiant ${etu} - Cours ${cours}`,
+                "type": "literal" 
+            }
+        ],
+        "evalMasterTHYP:hasGrade": [
+            { 
+                "@value": note,
+                "type": "literal" 
+            }
+        ],
+        "evalMasterTHYP:hasStudent": [
+            { 
+                "value_resource_id": parseInt(etu),
+                "type": "resource"
+            }
+        ],
+        "evalMasterTHYP:hasCourse": [
+            { 
+                "value_resource_id": parseInt(cours),
+                "type": "resource"
+            }
+        ]
+    };
+
+    try {
+        const response = await fetch(apiUrl(""), {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            messageDiv.innerHTML = '<div class="success">✓ Évaluation enregistrée avec succès!</div>';
+            // Réinitialiser les champs
+            document.getElementById("etuId").value = "";
+            document.getElementById("coursId").value = "";
+            document.getElementById("noteId").value = "";
+            // Recharger la liste
+            showEval();
+        } else {
+            const error = await response.text();
+            messageDiv.innerHTML = `<div class="error">Erreur lors de l'enregistrement: ${error}</div>`;
+        }
+    } catch (err) {
+        messageDiv.innerHTML = `<div class="error">Erreur: ${err.message}</div>`;
+    }
+}
+
+// Fonction pour afficher les évaluations
+async function showEval() {
+    const evalListDiv = document.getElementById("evalList");
+    
+    try {
+        const resp = await fetch(apiUrl(""));
+        const list = await resp.json();
+
+        console.log("Tous les items:", list);
+
+        // Filtrer uniquement les évaluations
+        const evaluations = list.filter(item => {
+            const resourceClass = item["o:resource_class"];
+            if (!resourceClass) return false;
+            
+            // Vérifier si c'est une Evaluation
+            const classId = resourceClass["o:id"];
+            const classLabel = resourceClass["o:label"];
+            const classUri = resourceClass["@id"];
+            
+            console.log("Item:", item["dcterms:title"]?.[0]?.["@value"], 
+                       "| Class ID:", classId, 
+                       "| Label:", classLabel,
+                       "| URI:", classUri);
+            
+            return (typeof classId === 'string' && classId.includes("Evaluation")) ||
+                   (typeof classId === 'number' && classUri && classUri.includes("Evaluation")) ||
+                   classLabel === "Évaluation" ||
+                   (item["@type"] && Array.isArray(item["@type"]) && 
+                    item["@type"].some(t => t.includes("evalMasterTHYP:Evaluation")));
+        });
+
+        console.log("Évaluations filtrées:", evaluations);
+
+        let html = "";
+        
+        if (evaluations.length === 0) {
+            html = "<p>Aucune évaluation trouvée.</p>";
+        } else {
+            evaluations.forEach(e => {
+                const id = e["o:id"];
+                const titre = e["dcterms:title"] ? e["dcterms:title"][0]["@value"] : "Sans titre";
+                const note = e["evalMasterTHYP:hasGrade"] ? e["evalMasterTHYP:hasGrade"][0]["@value"] : "?";
+                const studentId = e["evalMasterTHYP:hasStudent"] ? e["evalMasterTHYP:hasStudent"][0]["value_resource_id"] : "?";
+                const coursId = e["evalMasterTHYP:hasCourse"] ? e["evalMasterTHYP:hasCourse"][0]["value_resource_id"] : "?";
+
+                html += `
+                <div class="card">
+                    <b>ID Évaluation :</b> ${id}<br>
+                    <b>Titre :</b> ${titre}<br>
+                    <b>Note :</b> ${note}/20<br>
+                    <b>Étudiant :</b> Étudiant #${studentId}<br>
+                    <b>Cours :</b> Cours #${coursId}
+                </div>
+                `;
+            });
+        }
+
+        evalListDiv.innerHTML = html;
+    } catch (err) {
+        evalListDiv.innerHTML = 
+            `<p class="error">Erreur lors du chargement: ${err.message}</p>`;
+    }
+}
+
+// Rendre les fonctions accessibles globalement pour les onclick
+window.setEval = setEval;
+window.showEval = showEval;
+
+// Charger les évaluations au démarrage de la page
+showEval();
+</script>
+
+</body>
+</html>

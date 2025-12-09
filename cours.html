@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Cours</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+        }
+        #filterBox {
+            margin-bottom: 20px;
+            padding: 10px;
+            width: 300px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .course-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .course-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .student-tag {
+            background: #007bff;
+            padding: 4px 8px;
+            color: white;
+            border-radius: 4px;
+            margin-right: 6px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Liste des cours</h1>
+
+<input type="text" id="filterBox" placeholder="Filtrer les cours... (ex: THYP)">
+<div id="courseList"></div>
+
+<script type="module">
+    import { pa } from './authParams.js';
+
+    // -------------------------------
+    // 🔧 Fonction utilitaire API
+    // -------------------------------
+    function apiUrl(path = "") {
+        return `${pa.apiOmk}${path}?key_identity=${pa.ident}&key_credential=${pa.key}`;
+    }
+
+    // -------------------------------
+    // 1️⃣ Récupérer la liste des cours
+    // -------------------------------
+    async function getCours() {
+        const url = apiUrl("");
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Filtrer uniquement les items de type "Cours"
+        return data.filter(item => {
+            const resourceClass = item["o:resource_class"];
+            // Vérifier si l'ID contient "110" (Cours) ou si le label/URI contient "Cours"
+            return resourceClass?.["o:id"] === 110 || 
+                   resourceClass?.["@id"]?.includes("Cours") ||
+                   resourceClass?.["@id"]?.includes("/110");
+        });
+    }
+
+    // -------------------------------
+    // 2️⃣ Affichage des cours
+    // -------------------------------
+    async function showCours(cours) {
+        const container = d3.select("#courseList");
+        container.html(""); // Reset
+
+        cours.forEach(c => {
+            const id = c["o:id"];
+            const title = c["dcterms:title"] ? c["dcterms:title"][0]["@value"] : "Sans titre";
+
+            // Étudiants inscrits (relation "a pour étudiant")
+            const students = c["evalMasterTHYP:hasStudent"] || [];
+
+            const card = container.append("div").attr("class", "course-card");
+
+            card.append("div").attr("class", "course-title")
+                .text(`(${id}) - ${title}`);
+
+            card.append("div").html("<strong>Étudiants inscrits :</strong>");
+
+            if (students.length === 0) {
+                card.append("div").text("Aucun étudiant inscrit.");
+            } else {
+                students.forEach(s => {
+                    card.append("span")
+                        .attr("class", "student-tag")
+                        .text(`Étudiant #${s["value_resource_id"]}`);
+                });
+            }
+        });
+    }
+
+    // -------------------------------
+    // 3️⃣ Filtrer les cours
+    // -------------------------------
+    function filterCours(allCours) {
+        const text = document.getElementById("filterBox").value.toLowerCase();
+        const filtered = allCours.filter(c =>
+            JSON.stringify(c).toLowerCase().includes(text)
+        );
+        showCours(filtered);
+    }
+
+    // -------------------------------
+    // 4️⃣ Chargement initial
+    // -------------------------------
+    let allCourses = [];
+
+    getCours().then(cours => {
+        allCourses = cours;
+        showCours(allCourses);
+    });
+
+    document.getElementById("filterBox").addEventListener("input", () => {
+        filterCours(allCourses);
+    });
+
+</script>
+
+</body>
+</html>
